@@ -39,7 +39,11 @@ public class WebSocketClient : MonoBehaviour
         };
 
         // Keep sending messages at every 0.3s
+<<<<<<< HEAD
         InvokeRepeating("SendWebSocketMessage", 0.0f, 1.0f);
+=======
+        InvokeRepeating("SendWebSocketMessage", 0.0f, 0.3f);
+>>>>>>> b8b7b3aaf3ad108eee4ba8bba397ae52575c36a1
 
         // waiting for messages
         await websocket.Connect();
@@ -65,4 +69,8 @@ public class WebSocketClient : MonoBehaviour
     private async void OnApplicationQuit() {
         await websocket.Close();
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b8b7b3aaf3ad108eee4ba8bba397ae52575c36a1
