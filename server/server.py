@@ -3,6 +3,7 @@ import websockets
 import agentpy as ap
 from enum import IntEnum
 import random
+import numpy as np
 
 
 class TypesTiles(IntEnum):
@@ -13,18 +14,56 @@ class TypesTiles(IntEnum):
     CAR = 4
 
 
+class CarState(IntEnum):
+    HAS_TOUCHED_INTERSECTION = 0
+    HAS_NOT_TOUCHED_INTERSECTION = 1
+
+
+
+
 # MAP_SIZE int
 # MAP_Lanes
 # CARS
 posible_directions =  {
-            "N": (0, 1),
-            "S": (0, -1),
-            "E": (1, 0),
-            "W": (-1, 0),
-            "NE": (1, 1),
-            "NW": (-1, 1),
-            "SE": (1, -1),
-            "SW": (-1, -1),}
+            "N": (1, 0),
+            "S": (-1, 0),
+            "E": (0, 1),
+            "W": (0, -1),
+           }
+
+
+class Car(ap.Agent):
+    def setup(self, spawn_points):
+
+        opposites = {
+            "N": "S",
+            "S": "N",
+            "E": "W",
+            "W": "E",
+        }
+
+
+        pos = random.choice(spawn_points)
+        self.model.car_positions.append(pos)
+
+
+        if pos[0] == 0:  # Spawns south
+            self.to_dir = "S"
+            self.from_dir = "S"
+        elif pos[0] == self.model.p.MAP_SIZE - 1:  # Spawns north
+            self.to_dir = "N"
+            self.from_dir = "N"
+        elif pos[1] == 0:  # Spawns west
+            self.to_dir = "W"
+            self.from_dir = "W"
+        elif pos[1] == self.model.p.MAP_SIZE - 1:  # Spawns east
+            self.to_dir = "E"
+            self.from_dir = "E"
+
+        while self.to_dir == self.from_dir:
+            self.to_dir = random.choice(list(opposites.keys()))
+
+        self.from_dir = opposites[self.from_dir]
 
 
 
@@ -60,47 +99,14 @@ class MapModel(ap.Model):
         intersection_agents = ap.AgentList(self, len(intersection_pos))
         traffic_lights_agents = ap.AgentList(self, len(traffic_lights_pos))
 
-        spawn_points = spawn_points * (self.p.CARS // len(spawn_points) + 1)
-        random.shuffle(spawn_points)
+        #spawn_points = spawn_points * (self.p.CARS // len(spawn_points) + 1)
+        #random.shuffle(spawn_points)
 
 
-        car_agents = ap.AgentList(self, self.p.CARS)
-
-        opposites = {
-            "N": "S",
-            "S": "N",
-            "E": "W",
-            "W": "E",
-        }
-
-        # Assign initial positions to cars
-        for spawn_pos, car in zip(spawn_points, car_agents):
-            car.pos = spawn_pos
-
-            to_dir = ""
-            from_dir = ""
-
-            if car.pos[0] == 0: # Spawns south
-                to_dir = "S"
-                from_dir = "S"
-            elif car.pos[0] == self.p.MAP_SIZE - 1: # Spawns north
-                to_dir = "N"
-                from_dir = "N"
-            elif car.pos[1] == 0: # Spawns west
-                to_dir = "W"
-                from_dir = "W"
-            elif car.pos[1] == self.p.MAP_SIZE - 1: # Spawns east
-                to_dir = "E"
-                from_dir = "E"
-
-            while to_dir == from_dir:
-                to_dir = random.choice(list(opposites.keys()))
+        self.car_positions = []
 
 
-
-            car.to_dir = to_dir
-            car.from_dir = opposites[from_dir]
-
+        car_agents = ap.AgentList(self, self.p.CARS, Car, spawn_points=spawn_points)
 
 
 
@@ -110,22 +116,66 @@ class MapModel(ap.Model):
         intersection_agents.type = TypesTiles.INTERSECTION
         traffic_lights_agents.type = TypesTiles.TRAFFIC_LIGHT
         car_agents.type = TypesTiles.CAR
+        car_agents.state = CarState.HAS_NOT_TOUCHED_INTERSECTION
 
 
         self.grid.add_agents(city_agents, city_pos)
         self.grid.add_agents(street_agents, street_pos)
         self.grid.add_agents(intersection_agents, intersection_pos)
         self.grid.add_agents(traffic_lights_agents, traffic_lights_pos)
-        self.grid.add_agents(car_agents, spawn_points[0: len(car_agents)])
+        self.grid.add_agents(car_agents, self.car_positions)
 
     def step(self):
 
-        # Getting List of Currently Active Agents
         active_agents = self.grid.agents.to_list()
 
         cars = active_agents.select(active_agents.type == TypesTiles.CAR)
 
+
         for car in cars:
+            print(car.from_dir)
+            print(car.to_dir)
+            print(self.grid.positions[car])
+
+
+            if car.state == CarState.HAS_NOT_TOUCHED_INTERSECTION:
+
+                #print(self.grid.positions[car])
+
+                self.grid.move_by(car, posible_directions[car.from_dir])
+
+                if len(self.grid.agents[self.grid.positions[car]].to_list().select(self.grid.agents[self.grid.positions[car]].type == TypesTiles.INTERSECTION)) == 1:
+                    car.state = CarState.HAS_TOUCHED_INTERSECTION
+            else:
+                dir = tuple(np.sum([posible_directions[car.from_dir], posible_directions[car.to_dir]], axis=0))
+                new_pos = tuple(np.sum([self.grid.positions[car], dir], axis=0))
+
+                # Check if new position is in the grid
+                if not (0 <= new_pos[0] < self.p.MAP_SIZE and 0 <= new_pos[1] < self.p.MAP_SIZE):
+                    continue
+
+
+
+                if len(self.grid.agents[new_pos].to_list().select(self.grid.agents[new_pos].type == TypesTiles.INTERSECTION)) == 1:
+                    self.grid.move_by(car, dir)
+                else:
+                    self.grid.move_by(car, posible_directions[car.to_dir])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             pass
 
 
@@ -171,11 +221,23 @@ class MapModel(ap.Model):
 #asyncio.run(main())
 
 
+def animation_plot(model, ax):
+    attr_grid = model.grid.attr_grid('type')
+    color_dict = {TypesTiles.CITY: 'black', TypesTiles.STREET: 'white', TypesTiles.INTERSECTION: 'yellow', TypesTiles.TRAFFIC_LIGHT: 'red', TypesTiles.CAR: 'blue'}
+
+
+    ax.set_title(f"Robot Cleaning Simulation", loc="left", fontdict={'family': 'Futura', 'color': 'black', 'size': 15})
+    ax.set_xlabel(f"Step: {model.t}")
+    ap.gridplot(attr_grid, ax=ax, color_dict=color_dict, convert=True)
+
+
 
 if __name__ == "__main__":
     model = MapModel({
         "MAP_SIZE": 18,
         "LANES": 3,
-        "CARS": 200,
+        "CARS": 1,
     })
-    model.run(1)
+    model.run(20)
+
+
