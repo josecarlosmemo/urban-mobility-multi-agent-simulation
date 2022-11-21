@@ -1,4 +1,5 @@
 import asyncio
+import json
 import websockets
 import agentpy as ap
 from enum import IntEnum
@@ -52,7 +53,8 @@ class Car(ap.Agent):
 
         pos = random.choice(spawn_points)
         self.model.car_positions.append(pos)
-
+        self.id = self.model.auto_id
+        self.model.auto_id += 1
 
         if pos[0] == 0:  # Spawns south
             self.to_dir = "S"
@@ -85,6 +87,7 @@ class MapModel(ap.Model):
         spawn_points = []
 
         self.tiles = []
+        self.auto_id = 0
 
         for i in range(self.p.MAP_SIZE):
             self.tiles.append([])
@@ -106,11 +109,11 @@ class MapModel(ap.Model):
                     self.tiles[i].append(TypesTiles.CITY)
 
         # print tiles
-        print(np.shape(self.tiles))
-        for i in range(self.p.MAP_SIZE-1, -1, -1):
-            for j in range(self.p.MAP_SIZE):
-                print(int(self.tiles[i][j]) , end=" ")
-            print()
+        # print(np.shape(self.tiles))
+        # for i in range(self.p.MAP_SIZE-1, -1, -1):
+        #     for j in range(self.p.MAP_SIZE):
+        #         print(int(self.tiles[i][j]) , end=" ")
+        #     print()
 
 
         self.car_positions = []
@@ -130,15 +133,18 @@ class MapModel(ap.Model):
         active_agents = self.grid.agents.to_list()
 
         cars = active_agents.select(active_agents.type == TypesTiles.CAR)
+        
+        payload = '{"cars": ['
 
         for car in cars:
-            print(car.from_dir)
-            print(car.to_dir)
-            print(self.grid.positions[car])
-            print(car.state)
-            print()
+            # print(car.from_dir)
+            # print(car.to_dir)
+            # print(self.grid.positions[car])
+            # print(car.state)
+            # print()
 
-            # MY PROPOSAL ----------------------------------------------------    
+            payload += f'{{"id": {car.id}, "x": {self.grid.positions[car][1]}, "y": {self.grid.positions[car][0]}}},'
+
             if car.state == CarState.HAS_NOT_TOUCHED_INTERSECTION:
 
                 x = dirs[car.from_dir][0] + dirs[car.to_dir][0]
@@ -227,7 +233,11 @@ class MapModel(ap.Model):
 
         # Receive Location
 
-        pass
+        payload = payload[:-1]
+        payload += ']}'
+
+        print("payload: ", payload)
+        JSON = json.loads(payload)
 
 
 #async def echo(websocket):
@@ -259,8 +269,8 @@ if __name__ == "__main__":
     model = MapModel({
         "MAP_SIZE": 18,
         "LANES": 3,
-        "CARS": 1,
+        "CARS": 10,
     })
-    model.run(20)
+    model.run(2)
 
 
