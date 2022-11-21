@@ -1,4 +1,5 @@
 import asyncio
+import json
 import websockets
 import agentpy as ap
 from enum import IntEnum
@@ -12,40 +13,48 @@ class TypesTiles(IntEnum):
     INTERSECTION = 2
     TRAFFIC_LIGHT = 3
     CAR = 4
+    SPAWN = 5
+    SWITCH_LANE = 6
+    REVERSED_STREET = 7
 
 
 class CarState(IntEnum):
     HAS_TOUCHED_INTERSECTION = 0
     HAS_NOT_TOUCHED_INTERSECTION = 1
-
-
-
+    STOP_LIGHT = 2
 
 # MAP_SIZE int
 # MAP_Lanes
 # CARS
-posible_directions =  {
+dirs =  {
             "N": (1, 0),
             "S": (-1, 0),
             "E": (0, 1),
-            "W": (0, -1),
-           }
+            "W": (0, -1)
+        }
+
+class TrafficDirection(IntEnum):
+    NORTH = 0
+    SOUTH = 1
+    EAST = 2
+    WEST = 3
 
 
 class Car(ap.Agent):
-    def setup(self, spawn_points):
+     def setup(self, spawn_points):
 
         opposites = {
             "N": "S",
             "S": "N",
             "E": "W",
-            "W": "E",
+            "W": "E"
         }
 
 
         pos = random.choice(spawn_points)
         self.model.car_positions.append(pos)
-
+        self.id = self.model.auto_id
+        self.model.auto_id += 1
 
         if pos[0] == 0:  # Spawns south
             self.to_dir = "S"
@@ -75,32 +84,36 @@ class MapModel(ap.Model):
         laneMax = laneMin + self.p.LANES * 2
         laneMid = laneMin + self.p.LANES
 
-        street_pos = []
-        intersection_pos = []
-        city_pos = []
         spawn_points = []
-        traffic_lights_pos = []
+
+        self.tiles = []
+        self.auto_id = 0
 
         for i in range(self.p.MAP_SIZE):
+            self.tiles.append([])
             for j in range(self.p.MAP_SIZE):
                 if laneMin <= i < laneMax and laneMin <= j < laneMax:
-                    intersection_pos.append((i, j))
+                    self.tiles[i].append(TypesTiles.INTERSECTION)
                 elif j == 0 and laneMin <= i < laneMid or j == self.p.MAP_SIZE - 1 and laneMid <= i < laneMax or i == 0 and laneMid <= j < laneMax or i == self.p.MAP_SIZE - 1 and laneMin <= j < laneMid:
                     spawn_points.append((i, j))
+                    self.tiles[i].append(TypesTiles.SPAWN)
                 elif j == laneMin - 1 and laneMin <= i < laneMid or j == laneMax and laneMid <= i < laneMax or i == laneMin - 1 and laneMid <= j < laneMax or i == laneMax and laneMin <= j < laneMid:
-                    traffic_lights_pos.append((i, j))
+                    self.tiles[i].append(TypesTiles.TRAFFIC_LIGHT)
+                elif (j == laneMin - 3 or j == laneMin - 5) and laneMin <= i < laneMid or (j == laneMax + 2 or j == laneMax + 4) and laneMid <= i < laneMax or (i == laneMin - 3 or i == laneMin - 5) and laneMid <= j < laneMax or (i == laneMax + 2 or i == laneMax + 4) and laneMin <= j < laneMid:
+                    self.tiles[i].append(TypesTiles.SWITCH_LANE)
+                elif 0 <= i < laneMin and laneMin <= j < laneMid or laneMax <= i < self.p.MAP_SIZE and laneMid <= j < laneMax or 0 <= j < laneMin and laneMid <= i < laneMax or laneMax <= j < self.p.MAP_SIZE and laneMin <= i < laneMid:
+                    self.tiles[i].append(TypesTiles.REVERSED_STREET)
                 elif laneMin <= i < laneMax or laneMin <= j < laneMax:
-                    street_pos.append((i, j))
+                    self.tiles[i].append(TypesTiles.STREET)
                 else:
-                    city_pos.append((i, j))
+                    self.tiles[i].append(TypesTiles.CITY)
 
-        city_agents = ap.AgentList(self, len(city_pos))
-        street_agents = ap.AgentList(self, len(street_pos))
-        intersection_agents = ap.AgentList(self, len(intersection_pos))
-        traffic_lights_agents = ap.AgentList(self, len(traffic_lights_pos))
-
-        #spawn_points = spawn_points * (self.p.CARS // len(spawn_points) + 1)
-        #random.shuffle(spawn_points)
+        # print tiles
+        # print(np.shape(self.tiles))
+        # for i in range(self.p.MAP_SIZE-1, -1, -1):
+        #     for j in range(self.p.MAP_SIZE):
+        #         print(int(self.tiles[i][j]) , end=" ")
+        #     print()
 
 
         self.car_positions = []
@@ -108,103 +121,127 @@ class MapModel(ap.Model):
 
         car_agents = ap.AgentList(self, self.p.CARS, Car, spawn_points=spawn_points)
 
-
-
-
-        city_agents.type = TypesTiles.CITY
-        street_agents.type = TypesTiles.STREET
-        intersection_agents.type = TypesTiles.INTERSECTION
-        traffic_lights_agents.type = TypesTiles.TRAFFIC_LIGHT
         car_agents.type = TypesTiles.CAR
         car_agents.state = CarState.HAS_NOT_TOUCHED_INTERSECTION
 
-
-        self.grid.add_agents(city_agents, city_pos)
-        self.grid.add_agents(street_agents, street_pos)
-        self.grid.add_agents(intersection_agents, intersection_pos)
-        self.grid.add_agents(traffic_lights_agents, traffic_lights_pos)
         self.grid.add_agents(car_agents, self.car_positions)
+
+        self.turning = False
 
     def step(self):
 
         active_agents = self.grid.agents.to_list()
 
         cars = active_agents.select(active_agents.type == TypesTiles.CAR)
-
+        
+        payload = '{"cars": ['
 
         for car in cars:
-            print(car.from_dir)
-            print(car.to_dir)
-            print(self.grid.positions[car])
+            # print(car.from_dir)
+            # print(car.to_dir)
+            # print(self.grid.positions[car])
+            # print(car.state)
+            # print()
 
+            # Add car id, x and y to payload
+
+            payload += '{"id": ' + str(car.id) + ', "x": ' + str(self.grid.positions[car][1]) + ', "y": ' + str(self.grid.positions[car][0]) + '},'
 
             if car.state == CarState.HAS_NOT_TOUCHED_INTERSECTION:
 
-                #print(self.grid.positions[car])
+                x = dirs[car.from_dir][0] + dirs[car.to_dir][0]
+                y = dirs[car.from_dir][1] + dirs[car.to_dir][1]
+            
+                if abs(x) == 2:
+                    x = x // 2
+                elif abs(y) == 2:
+                    y = y // 2
+                
+                desired_dir = (x, y)
+                desired_pos = (self.grid.positions[car][0] + desired_dir[0], self.grid.positions[car][1] + desired_dir[1])
 
-                self.grid.move_by(car, posible_directions[car.from_dir])
+                # Check if the car is in a swith position
+                if self.tiles[self.grid.positions[car][0]][self.grid.positions[car][1]] == TypesTiles.SWITCH_LANE:
 
-                if len(self.grid.agents[self.grid.positions[car]].to_list().select(self.grid.agents[self.grid.positions[car]].type == TypesTiles.INTERSECTION)) == 1:
-                    car.state = CarState.HAS_TOUCHED_INTERSECTION
-            else:
-                dir = tuple(np.sum([posible_directions[car.from_dir], posible_directions[car.to_dir]], axis=0))
-                new_pos = tuple(np.sum([self.grid.positions[car], dir], axis=0))
+                    # Check if there is a car in the desired position
+                    if len(self.grid.agents[desired_pos].to_list()) != 0:
+                        continue
 
-                # Check if new position is in the grid
-                if not (0 <= new_pos[0] < self.p.MAP_SIZE and 0 <= new_pos[1] < self.p.MAP_SIZE):
+                    # Check if the desired position is a street
+                    if self.tiles[desired_pos[0]][desired_pos[1]] == TypesTiles.STREET:
+                        self.grid.move_to(car, desired_pos)
+                    else:
+                        self.grid.move_by(car, dirs[car.from_dir])
                     continue
 
+                # The current tile is not a switch position
 
+                # Check if cell in front has a car
+                desired_pos = (self.grid.positions[car][0] + dirs[car.from_dir][0], self.grid.positions[car][1] + dirs[car.from_dir][1])
+                if not (0 <= desired_pos[0] < self.p.MAP_SIZE and 0 <= desired_pos[1] < self.p.MAP_SIZE):
+                    continue
 
-                if len(self.grid.agents[new_pos].to_list().select(self.grid.agents[new_pos].type == TypesTiles.INTERSECTION)) == 1:
-                    self.grid.move_by(car, dir)
+                if len(self.grid.agents[desired_pos].to_list()) == 0:
+                    self.grid.move_to(car, desired_pos)
+
+                    # If the car is in a stop-light
+                    if self.tiles[self.grid.positions[car][0]][self.grid.positions[car][1]] == TypesTiles.TRAFFIC_LIGHT:
+                        car.state = CarState.STOP_LIGHT
+                        # Announce a car is turning, so other cars stop
+                        # self.turning = True
+
+            elif car.state == CarState.STOP_LIGHT:
+                # Check if cell in front has a car
+                desired_pos = (self.grid.positions[car][0] + dirs[car.from_dir][0], self.grid.positions[car][1] + dirs[car.from_dir][1])
+                if not (0 <= desired_pos[0] < self.p.MAP_SIZE and 0 <= desired_pos[1] < self.p.MAP_SIZE):
+                    continue
+
+                if len(self.grid.agents[desired_pos].to_list()) != 0:
+                    continue
+                
+                # Check if there is a car turning
+                if self.turning:
+                    continue
+
+                self.grid.move_by(car, dirs[car.from_dir])
+                car.state = CarState.HAS_TOUCHED_INTERSECTION
+
+            else:
+                x = dirs[car.from_dir][0] + dirs[car.to_dir][0]
+                y = dirs[car.from_dir][1] + dirs[car.to_dir][1]
+                
+                if abs(x) == 2:
+                    x = x // 2
+                elif abs(y) == 2:
+                    y = y // 2
+                
+                desired_dir = (x, y)
+                desired_pos = (self.grid.positions[car][0] + desired_dir[0], self.grid.positions[car][1] + desired_dir[1])
+
+                # Check if new position is in the grid
+                if not (0 <= desired_pos[0] < self.p.MAP_SIZE and 0 <= desired_pos[1] < self.p.MAP_SIZE):
+                    # Remove car from grid
+                    self.grid.remove_agents(car)
+                    continue
+
+                # Check if there is a car in the desired position
+                if len(self.grid.agents[desired_pos].to_list()) != 0:
+                    continue
+
+                if self.tiles[desired_pos[0]][desired_pos[1]] == TypesTiles.INTERSECTION:
+                    self.grid.move_by(car, desired_dir)
                 else:
-                    self.grid.move_by(car, posible_directions[car.to_dir])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            pass
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        # Print the grid
-        #for i in range(self.p.MAP_SIZE-1, -1, -1):
-        #    for j in range(self.p.MAP_SIZE):
-        #        print(self.grid.agents[(i,j)].type, end="")
-        #    print()
-
+                    self.grid.move_by(car, dirs[car.to_dir])
 
         # Send Location
 
         # Receive Location
 
-        pass
+        payload = payload[:-1]
+        payload += ']}'
+
+        return payload
+
 
 
 #async def echo(websocket):
@@ -221,23 +258,68 @@ class MapModel(ap.Model):
 #asyncio.run(main())
 
 
-def animation_plot(model, ax):
-    attr_grid = model.grid.attr_grid('type')
-    color_dict = {TypesTiles.CITY: 'black', TypesTiles.STREET: 'white', TypesTiles.INTERSECTION: 'yellow', TypesTiles.TRAFFIC_LIGHT: 'red', TypesTiles.CAR: 'blue'}
+# def animation_plot(model, ax):
+#     attr_grid = model.grid.attr_grid('type')
+#     color_dict = {TypesTiles.CITY: 'black', TypesTiles.STREET: 'white', TypesTiles.INTERSECTION: 'yellow', TypesTiles.TRAFFIC_LIGHT: 'red', TypesTiles.CAR: 'blue'}
 
 
-    ax.set_title(f"Robot Cleaning Simulation", loc="left", fontdict={'family': 'Futura', 'color': 'black', 'size': 15})
-    ax.set_xlabel(f"Step: {model.t}")
-    ap.gridplot(attr_grid, ax=ax, color_dict=color_dict, convert=True)
+#     ax.set_title(f"Robot Cleaning Simulation", loc="left", fontdict={'family': 'Futura', 'color': 'black', 'size': 15})
+#     ax.set_xlabel(f"Step: {model.t}")
+#     ap.gridplot(attr_grid, ax=ax, color_dict=color_dict, convert=True)
+
+
+
+# if __name__ == "__main__":
+#     model = MapModel({
+#         "MAP_SIZE": 18,
+#         "LANES": 3,
+#         "CARS": 10,
+#     })
+#     model.run(2)
+
+
+
+async def run_simulation(websocket, path):
+    print ("New connection")
+
+    map_size = await websocket.recv()
+    map_size = int(map_size)
+    print("map_size: ", map_size)
+
+    lanes = await websocket.recv()
+    lanes = int(lanes)
+    print("lanes: ", lanes)
+
+    cars = await websocket.recv()
+    cars = int(cars)
+    print("cars: ", cars)
+
+    model = MapModel({
+        "MAP_SIZE": map_size,
+        "LANES": lanes,
+        "CARS": cars,
+        "WEBSOCKET": websocket,
+    })
+
+    model.setup()
+
+    while len(model.grid.agents.to_list()) != 0:
+        await websocket.send(model.step())
+        await asyncio.sleep(0.1)
+
+    await websocket.send("Done")
+
+   
+
+    pass
+
+
+async def main():
+    async with websockets.serve(run_simulation, "localhost", 8765):
+        print("Server started")
+        await asyncio.Future()  # run forever
 
 
 
 if __name__ == "__main__":
-    model = MapModel({
-        "MAP_SIZE": 18,
-        "LANES": 3,
-        "CARS": 1,
-    })
-    model.run(20)
-
-
+    asyncio.run(main())
