@@ -134,14 +134,14 @@ class MapModel(ap.Model):
 
         cars = active_agents.select(active_agents.type == TypesTiles.CAR)
         
-        payload = '{"cars": ['
+        payload = '{"t":' + str(self.t) + ', "cars": ['
 
         for car in cars:
-            # print(car.from_dir)
-            # print(car.to_dir)
-            # print(self.grid.positions[car])
-            # print(car.state)
-            # print()
+            print(car.from_dir)
+            print(car.to_dir)
+            print(self.grid.positions[car])
+            print(car.state)
+            print()
 
             # Add car id, x and y to payload
 
@@ -240,6 +240,8 @@ class MapModel(ap.Model):
         payload = payload[:-1]
         payload += ']}'
 
+        self.t += 1
+
         return payload
 
 
@@ -303,9 +305,25 @@ async def run_simulation(websocket, path):
 
     model.setup()
 
+    # await websocket.send("Start")
+
     while len(model.grid.agents.to_list()) != 0:
         await websocket.send(model.step())
         await asyncio.sleep(0.1)
+
+    # Send first model step and wait for response
+
+    # while True and len(model.grid.agents.to_list()) != 0:
+    #     await websocket.send(model.step())
+    #     await asyncio.sleep(0.1)
+    #     await websocket.recv()
+    
+
+
+
+
+
+
 
     await websocket.send("Done")
 

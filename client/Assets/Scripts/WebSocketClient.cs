@@ -7,12 +7,27 @@ using NativeWebSocket;
 
 public class WebSocketClient : MonoBehaviour
 {
+    // Server URL
+    [SerializeField] private string _serverUrl = "ws://localhost:8765";
+
+    // Grid manager
+    [SerializeField] private GridManager _grid;
+
+
+    // GameObjects
+    [SerializeField] private GameObject _carPrefab;
+
+
+    
+
+
+
+
     WebSocket websocket;
 
-    // Start is called before the first frame update
     async void Start()
     {
-        websocket = new WebSocket("ws://localhost:8765");
+        websocket = new WebSocket(_serverUrl);
 
         websocket.OnOpen += () =>
         {
@@ -30,12 +45,37 @@ public class WebSocketClient : MonoBehaviour
         // };
 
         websocket.OnMessage += (bytes) => {
-            Debug.Log("OnMessage!");
-            Debug.Log(bytes);
+            var message = System.Text.Encoding.UTF8.GetString(bytes);
 
-            // getting the message as a string
-            // var message = System.Text.Encoding.UTF8.GetString(bytes);
-            // Debug.Log("OnMessage! " + message);
+            // Parse the message
+            var car = JsonUtility.FromJson<ListCars>(message);
+
+
+
+            // Print cars
+            foreach (var c in car.cars)
+            {
+                _grid.MoveObjectToTile(_carPrefab, new Vector2(c.x, c.y));
+            }
+           
+
+           
+
+
+
+
+
+
+            // Wait for 10 seconds
+
+
+
+
+            // Debug.Log("OnMessage!");
+            // Debug.Log(bytes);
+
+            // // getting the message as a string
+            // // Debug.Log("OnMessage! " + message);
         };
 
         // Keep sending messages at every 0.3s
@@ -58,11 +98,18 @@ public class WebSocketClient : MonoBehaviour
             // Sending bytes
             //await websocket.Send(new byte[] { 10, 20, 30 });
             // Sending plain text
-            await websocket.SendText("plain text message");
+            await websocket.SendText("18");
+            await websocket.SendText("3");
+            await websocket.SendText("1");
         }
     }
 
     private async void OnApplicationQuit() {
         await websocket.Close();
     }
+
+
+
+
+
 }
