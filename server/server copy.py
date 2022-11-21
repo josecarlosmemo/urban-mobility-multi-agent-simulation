@@ -13,6 +13,8 @@ class TypesTiles(IntEnum):
     TRAFFIC_LIGHT = 3
     CAR = 4
     SPAWN = 5
+    SWITCH_LANE = 6
+    REVERSED_STREET = 7
 
 
 class CarState(IntEnum):
@@ -29,6 +31,12 @@ dirs =  {
             "E": (0, 1),
             "W": (0, -1)
         }
+
+class TrafficDirection(IntEnum):
+    NORTH = 0
+    SOUTH = 1
+    EAST = 2
+    WEST = 3
 
 
 class Car(ap.Agent):
@@ -88,17 +96,21 @@ class MapModel(ap.Model):
                     self.tiles[i].append(TypesTiles.SPAWN)
                 elif j == laneMin - 1 and laneMin <= i < laneMid or j == laneMax and laneMid <= i < laneMax or i == laneMin - 1 and laneMid <= j < laneMax or i == laneMax and laneMin <= j < laneMid:
                     self.tiles[i].append(TypesTiles.TRAFFIC_LIGHT)
+                elif (j == laneMin - 3 or j == laneMin - 5) and laneMin <= i < laneMid or (j == laneMax + 2 or j == laneMax + 4) and laneMid <= i < laneMax or (i == laneMin - 3 or i == laneMin - 5) and laneMid <= j < laneMax or (i == laneMax + 2 or i == laneMax + 4) and laneMin <= j < laneMid:
+                    self.tiles[i].append(TypesTiles.SWITCH_LANE)
+                elif 0 <= i < laneMin and laneMin <= j < laneMid or laneMax <= i < self.p.MAP_SIZE and laneMid <= j < laneMax or 0 <= j < laneMin and laneMid <= i < laneMax or laneMax <= j < self.p.MAP_SIZE and laneMin <= i < laneMid:
+                    self.tiles[i].append(TypesTiles.REVERSED_STREET)
                 elif laneMin <= i < laneMax or laneMin <= j < laneMax:
                     self.tiles[i].append(TypesTiles.STREET)
                 else:
                     self.tiles[i].append(TypesTiles.CITY)
 
         # print tiles
-        # print(np.shape(self.tiles))
-        # for i in range(self.p.MAP_SIZE-1, -1, -1):
-        #     for j in range(self.p.MAP_SIZE):
-        #         print(int(self.tiles[i][j]) , end=" ")
-        #     print()
+        print(np.shape(self.tiles))
+        for i in range(self.p.MAP_SIZE-1, -1, -1):
+            for j in range(self.p.MAP_SIZE):
+                print(int(self.tiles[i][j]) , end=" ")
+            print()
 
 
         self.car_positions = []
@@ -128,6 +140,34 @@ class MapModel(ap.Model):
 
             # MY PROPOSAL ----------------------------------------------------    
             if car.state == CarState.HAS_NOT_TOUCHED_INTERSECTION:
+
+                x = dirs[car.from_dir][0] + dirs[car.to_dir][0]
+                y = dirs[car.from_dir][1] + dirs[car.to_dir][1]
+            
+                if abs(x) == 2:
+                    x = x // 2
+                elif abs(y) == 2:
+                    y = y // 2
+                
+                desired_dir = (x, y)
+                desired_pos = (self.grid.positions[car][0] + desired_dir[0], self.grid.positions[car][1] + desired_dir[1])
+
+                # Check if the car is in a swith position
+                if self.tiles[self.grid.positions[car][0]][self.grid.positions[car][1]] == TypesTiles.SWITCH_LANE:
+
+                    # Check if there is a car in the desired position
+                    if len(self.grid.agents[desired_pos].to_list()) != 0:
+                        continue
+
+                    # Check if the desired position is a street
+                    if self.tiles[desired_pos[0]][desired_pos[1]] == TypesTiles.STREET:
+                        self.grid.move_to(car, desired_pos)
+                    else:
+                        self.grid.move_by(car, dirs[car.from_dir])
+                    continue
+
+                # The current tile is not a switch position
+
                 # Check if cell in front has a car
                 desired_pos = (self.grid.positions[car][0] + dirs[car.from_dir][0], self.grid.positions[car][1] + dirs[car.from_dir][1])
                 if not (0 <= desired_pos[0] < self.p.MAP_SIZE and 0 <= desired_pos[1] < self.p.MAP_SIZE):
@@ -170,10 +210,12 @@ class MapModel(ap.Model):
                 desired_dir = (x, y)
                 desired_pos = (self.grid.positions[car][0] + desired_dir[0], self.grid.positions[car][1] + desired_dir[1])
 
-                print("desired pos: ", desired_pos)
-
                 # Check if new position is in the grid
                 if not (0 <= desired_pos[0] < self.p.MAP_SIZE and 0 <= desired_pos[1] < self.p.MAP_SIZE):
+                    continue
+
+                # Check if there is a car in the desired position
+                if len(self.grid.agents[desired_pos].to_list()) != 0:
                     continue
 
                 if self.tiles[desired_pos[0]][desired_pos[1]] == TypesTiles.INTERSECTION:
