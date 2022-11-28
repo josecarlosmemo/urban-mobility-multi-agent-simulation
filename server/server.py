@@ -7,7 +7,7 @@ import random
 import numpy as np
 
 
-class TypesTiles(IntEnum):
+class TypesTiles():
     CITY = 0
     STREET = 1
     INTERSECTION = 2
@@ -17,6 +17,10 @@ class TypesTiles(IntEnum):
     SWITCH_LANE = 6
     REVERSED_STREET = 7
 
+class TrafficLightState(IntEnum):
+    RED = 0
+    GREEN = 1
+    YELLOW = 2
 
 class CarState(IntEnum):
     HAS_TOUCHED_INTERSECTION = 0
@@ -32,6 +36,13 @@ dirs =  {
             "E": (0, 1),
             "W": (0, -1)
         }
+
+traffic_order = {
+    "N": 0,
+    "E": 1,
+    "W": 2,
+    "S": 3
+}
 
 class TrafficDirection(IntEnum):
     NORTH = 0
@@ -117,6 +128,14 @@ class MapModel(ap.Model):
 
 
         self.car_positions = []
+        self.traffic_lights = []
+
+        for i in range(4):
+            self.traffic_lights.append(TrafficLightState.RED)
+        
+        self.traffic_lights[0] = TrafficLightState.GREEN
+        self.current_light = 0
+        self.light_timer = -1
 
 
         car_agents = ap.AgentList(self, self.p.CARS, Car, spawn_points=spawn_points)
@@ -129,6 +148,22 @@ class MapModel(ap.Model):
         self.turning = False
 
     def step(self):
+        self.light_timer += 1
+        self.light_timer %= 20
+
+        if self.light_timer % 14 == 0:
+            for i in range(4):
+                if self.traffic_lights[i] == TrafficLightState.GREEN:
+                    self.traffic_lights[i] = TrafficLightState.YELLOW
+
+        if self.light_timer % 20 == 0:
+            self.current_light += 1
+            self.current_light %= 4
+            for i in range(4):
+                if i == self.current_light:
+                    self.traffic_lights[i] = TrafficLightState.GREEN
+                else:
+                    self.traffic_lights[i] = TrafficLightState.RED
 
         active_agents = self.grid.agents.to_list()
 
@@ -178,8 +213,6 @@ class MapModel(ap.Model):
 
                 # Check if cell in front has a car
                 desired_pos = (self.grid.positions[car][0] + dirs[car.from_dir][0], self.grid.positions[car][1] + dirs[car.from_dir][1])
-                if not (0 <= desired_pos[0] < self.p.MAP_SIZE and 0 <= desired_pos[1] < self.p.MAP_SIZE):
-                    continue
 
                 if len(self.grid.agents[desired_pos].to_list()) == 0:
                     self.grid.move_to(car, desired_pos)
@@ -191,10 +224,12 @@ class MapModel(ap.Model):
                         # self.turning = True
 
             elif car.state == CarState.STOP_LIGHT:
+                # Check if the traffic light is green
+                if self.traffic_lights[traffic_order[car.from_dir]] != TrafficLightState.GREEN:
+                    continue
+
                 # Check if cell in front has a car
                 desired_pos = (self.grid.positions[car][0] + dirs[car.from_dir][0], self.grid.positions[car][1] + dirs[car.from_dir][1])
-                if not (0 <= desired_pos[0] < self.p.MAP_SIZE and 0 <= desired_pos[1] < self.p.MAP_SIZE):
-                    continue
 
                 if len(self.grid.agents[desired_pos].to_list()) != 0:
                     continue
