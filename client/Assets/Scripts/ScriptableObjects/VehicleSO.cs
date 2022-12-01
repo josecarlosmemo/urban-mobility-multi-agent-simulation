@@ -1,0 +1,14 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "Vehicle", menuName = "MyScriptableObjects/Vehicle", order = 1)]
+public class VehicleSO : ScriptableObject
+{
+    public float scale;
+    public GameObject model;
+    public float width;
+    public float height;
+    public float depth;
+}
+

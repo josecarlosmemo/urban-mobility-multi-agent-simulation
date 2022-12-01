@@ -305,17 +305,6 @@ class MapModel(ap.Model):
 #     ap.gridplot(attr_grid, ax=ax, color_dict=color_dict, convert=True)
 
 
-
-# if __name__ == "__main__":
-#     model = MapModel({
-#         "MAP_SIZE": 18,
-#         "LANES": 3,
-#         "CARS": 10,
-#     })
-#     model.run(2)
-
-
-
 async def run_simulation(websocket, path):
     print ("New connection")
 
@@ -344,7 +333,7 @@ async def run_simulation(websocket, path):
 
     while len(model.grid.agents.to_list()) != 0:
         await websocket.send(model.step())
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(1)
 
     # Send first model step and wait for response
 

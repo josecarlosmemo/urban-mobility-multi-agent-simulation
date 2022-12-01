@@ -10,7 +10,7 @@ public class CarManager : MonoBehaviour
 {
 
     // List of car prefabs
-    [SerializeField] private List<GameObject> _carPrefabs;
+    [SerializeField] private GameObject _carPrefab;
 
     // Number of cars to spawn
     [SerializeField] private int _mapSize = 18;
@@ -26,13 +26,13 @@ public class CarManager : MonoBehaviour
 
     [SerializeField] private string _serverUrl = "ws://localhost:8765";
 
-    WebSocket websocket;
+    public WebSocket websocket;
 
 
 
 
     // Start is called before the first frame update
-   async void Start()
+    async void Start()
     {
         websocket = new WebSocket(_serverUrl);
 
@@ -58,19 +58,17 @@ public class CarManager : MonoBehaviour
                 foreach (var c in list_cars.cars)
                 {
                     var car = c;
-                    var carPrefab = _carPrefabs[4];
-                    var carObject = Instantiate(carPrefab, _grid.GetTileCenter(new Vector2(car.x, car.y)), Quaternion.identity);
+                    var carObject = Instantiate(_carPrefab, _grid.GetTileCenter(new Vector2(car.x, car.y)), Quaternion.identity);
                     
                     _cars.Add(car.id, carObject);
                 }
 
 
             } else {
-                foreach (var c in list_cars.cars)
+                foreach (var car in list_cars.cars)
                 {
-                    var car = c;
                     var carObject = _cars[car.id];
-                    _grid.MoveObjectToTile(carObject, new Vector2(car.x, car.y));
+                    _grid.MoveObjectToTile(carObject, new Vector2(car.x, car.y), websocket);
                 }
             }
 

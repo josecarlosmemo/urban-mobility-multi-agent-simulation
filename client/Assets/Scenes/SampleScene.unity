@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18028334, g: 0.22571336, b: 0.3069219, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028305, g: 0.22571313, b: 0.3069213, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -32832,14 +32832,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14ec54e5a2a124cf3b5117a50756287f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _carPrefabs:
-  - {fileID: 919132149155446097, guid: 9c831ad88590e574db1bc4e8fff01a8e, type: 3}
-  - {fileID: 919132149155446097, guid: 6587628951224cb4092f921a361ebe0a, type: 3}
-  - {fileID: 919132149155446097, guid: 29643a25c794dda4090c1069b92a23d8, type: 3}
-  - {fileID: 919132149155446097, guid: ab95e80c08c99454b9f8bee673dca0f6, type: 3}
-  - {fileID: 919132149155446097, guid: 7a789bab84d1d29469da17b58cbda300, type: 3}
+  _carPrefab: {fileID: 1178179335028357100, guid: 9efb5a53b25eb4032ba9f3eccebb0bcd, type: 3}
   _mapSize: 18
-  _numCars: 5
+  _numCars: 20
   _numLanes: 3
   _grid: {fileID: 1355228231}
   _serverUrl: ws://localhost:8765

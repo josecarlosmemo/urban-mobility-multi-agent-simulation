@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using NativeWebSocket;
 
 public class GridManager : MonoBehaviour {
     [SerializeField] private int _mapSize = 18;
@@ -16,6 +17,11 @@ public class GridManager : MonoBehaviour {
     [SerializeField] private Transform _cam;
 
     private Dictionary<Vector2, Tile> _tiles;
+
+    private int _activeCarsCount = 0;
+    private int _movedCarsCount = 0;
+    // Private coordinate array
+    private Vector2[] _trafficLightPositions;
 
     void Start() {
         GenerateGrid();
@@ -54,6 +60,10 @@ public class GridManager : MonoBehaviour {
                     spawnedTile.GetComponent<Renderer>().material = _roadMaterial;
 
 
+                } else if (y == 0 && laneMid <= x && x < laneMax || x == 0 && laneMin <= y && y < laneMid || y == _mapSize - 1 && laneMin <= x && x < laneMid || x == _mapSize - 1 && laneMid <= y && y < laneMax) {
+                    // self.tiles[i].append(TypesTiles.END_STREET)
+                    spawnedTile.GetComponent<Renderer>().material = _roadMaterial;
+
                 } else if (0 <= x && x < laneMin && laneMin <= y && y < laneMid || laneMax <= x && x < _mapSize && laneMid <= y && y < laneMax || 0 <= y && y < laneMin && laneMid <= x && x < laneMax || laneMax <= y && y < _mapSize && laneMin <= x && x < laneMid){
                     // self.tiles[i].append(TypesTiles.REVERSED_STREET)
                     spawnedTile.GetComponent<Renderer>().material = _roadMaterial;
@@ -72,10 +82,11 @@ public class GridManager : MonoBehaviour {
                 }
 
                 // TODO: Add IF to check if tile is end point
-                    
-
-
-
+                _trafficLightPositions = new Vector2[4];
+                _trafficLightPositions[0] = new Vector2(laneMax, laneMin); // Top
+                _trafficLightPositions[1] = new Vector2(laneMax - 1, laneMax); // Right
+                _trafficLightPositions[2] = new Vector2(laneMin, laneMin - 1); // Left
+                _trafficLightPositions[3] = new Vector2(laneMin - 1, laneMax - 1); // Bottom 
 
                 // // TODO Make this dynamic
 
@@ -98,9 +109,11 @@ public class GridManager : MonoBehaviour {
     }
 
     // Move Object to a tile
-    public void MoveObjectToTile(GameObject obj, Vector2 pos) {
+    public void MoveObjectToTile(GameObject obj, Vector2 pos, WebSocket websocket) {
         if (_tiles.TryGetValue(pos, out var tile)) {
-            obj.transform.position = tile.transform.position;
+            // Move object slowly to the tile
+            StartCoroutine(MoveCar(obj, tile, websocket));
+            
         }
     }
 
@@ -111,9 +124,32 @@ public class GridManager : MonoBehaviour {
         return Vector3.zero;
     }
 
+    public bool isTileEnd(Vector2 pos) {
+        for (int i = 0; i < _trafficLightPositions.Length; i++) {
+            if (pos == _trafficLightPositions[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-
-
+    // MoveObjectToTileCoroutine
+    IEnumerator MoveCar(GameObject obj, Tile tile, WebSocket websocket) {
+        var startPos = obj.transform.position;
+        var endPos = tile.transform.position;
+        var t = 0f;
+        while (t < 1) {
+            t += Time.deltaTime;
+            obj.transform.position = Vector3.Lerp(startPos, endPos, t);
+            yield return null;
+        }
+        _movedCarsCount++;
+        if (_movedCarsCount == _activeCarsCount) {
+            _movedCarsCount = 0;
+            _activeCarsCount = 0;
+            websocket.SendText("Cars moved");
+        }
+    }
 
 }
 

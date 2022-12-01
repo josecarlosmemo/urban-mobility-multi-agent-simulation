@@ -13,16 +13,10 @@ public class WebSocketClient : MonoBehaviour
     // Grid manager
     [SerializeField] private GridManager _grid;
 
-
     // GameObjects
     [SerializeField] private GameObject _carPrefab;
 
-
-    
-
-
-
-
+    // WebSocket
     WebSocket websocket;
 
     async void Start()
@@ -50,26 +44,14 @@ public class WebSocketClient : MonoBehaviour
             // Parse the message
             var car = JsonUtility.FromJson<ListCars>(message);
 
-
-
-            // Print cars
+            // Move cars
             foreach (var c in car.cars)
             {
-                _grid.MoveObjectToTile(_carPrefab, new Vector2(c.x, c.y));
+                _grid.MoveObjectToTile(_carPrefab, new Vector2(c.x, c.y), websocket);
             }
-           
-
-           
-
-
-
-
 
 
             // Wait for 10 seconds
-
-
-
 
             // Debug.Log("OnMessage!");
             // Debug.Log(bytes);
