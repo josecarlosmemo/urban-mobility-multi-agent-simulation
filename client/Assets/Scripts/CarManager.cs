@@ -45,11 +45,13 @@ public class CarManager : MonoBehaviour
         websocket.OnMessage += (bytes) => {
             var message = System.Text.Encoding.UTF8.GetString(bytes);
 
+            // Debug.Log(message);
+
             if (message != "Done") { 
 
             var list_cars = JsonUtility.FromJson<ListCars>(message);
 
-            Debug.Log(list_cars.t);
+            // Debug.Log(list_cars.t);
 
             if (list_cars.t == 0){
                 Debug.Log("First Step");
@@ -77,6 +79,8 @@ public class CarManager : MonoBehaviour
         };
 
         InvokeRepeating("SendWebSocketMessage", 0.0f, 1.0f); //TODO Change this
+
+
 
 
 

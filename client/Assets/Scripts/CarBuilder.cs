@@ -19,6 +19,10 @@ public class CarBuilder : MonoBehaviour
         UpdateVehicle();
         
     }
+    
+
+
+
 
     private void UpdateVehicle() {
 
@@ -26,13 +30,32 @@ public class CarBuilder : MonoBehaviour
             Destroy(_childVehicle);
         }
 
+      
+
+
+
+
+
         // utilizando los datos construir carrito
         _childVehicle = Instantiate<GameObject>(
             _data.model, 
             transform.position, 
-            transform.rotation,
+            (_data.rotX == 0 && _data.rotY == 0 && _data.rotZ == 0) ? transform.rotation : Quaternion.Euler(_data.rotX, _data.rotY, _data.rotZ),
             transform
             );
+
+
+        // If the vehicle has a translation, apply it
+        if (_data.transX != 0 || _data.transY != 0 || _data.transZ != 0) {
+             _childVehicle.transform.Translate(_data.transX, _data.transY, _data.transZ);
+        }
+
+        
+       
+
+
+
+
 
         _childVehicle.transform.localScale = new Vector3(
             _data.scale, 
@@ -43,6 +66,13 @@ public class CarBuilder : MonoBehaviour
         BoxCollider bc = gameObject.AddComponent<BoxCollider>();
         bc.size = new Vector3(_data.width * _data.scale, _data.height * _data.scale, _data.depth * _data.scale);
         bc.center = new Vector3(0, _data.height * _data.scale / 2, 0);
+
+        // add collider detection
+        
+
+
+
+
     }
 
     public void UpdateVehicle(VehicleSO newVehicle) {

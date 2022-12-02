@@ -148,6 +148,14 @@ class MapModel(ap.Model):
         self.turning = False
 
     def step(self):
+        
+        active_agents = self.grid.agents.to_list()
+
+        cars = active_agents.select(active_agents.type == TypesTiles.CAR)
+        
+        # Add traffic lights to payload
+        payload = '{"t":' + str(self.t) + ', "traffic_lights": ['+ str(self.traffic_lights[0].value) + ', ' + str(self.traffic_lights[1].value) + ', ' + str(self.traffic_lights[2].value) + ', ' + str(self.traffic_lights[3].value) + '], "cars": ['
+
         self.light_timer += 1
         self.light_timer %= 20
 
@@ -165,11 +173,6 @@ class MapModel(ap.Model):
                 else:
                     self.traffic_lights[i] = TrafficLightState.RED
 
-        active_agents = self.grid.agents.to_list()
-
-        cars = active_agents.select(active_agents.type == TypesTiles.CAR)
-        
-        payload = '{"t":' + str(self.t) + ', "cars": ['
 
         for car in cars:
             print(car.from_dir)
@@ -181,6 +184,17 @@ class MapModel(ap.Model):
             # Add car id, x and y to payload
 
             payload += '{"id": ' + str(car.id) + ', "x": ' + str(self.grid.positions[car][1]) + ', "y": ' + str(self.grid.positions[car][0]) + '},'
+
+            # Check if car is at desired position
+
+             # Check if cell in front has a car
+            desired_pos = (self.grid.positions[car][0] + dirs[car.from_dir][0], self.grid.positions[car][1] + dirs[car.from_dir][1])
+
+            if 0 <= desired_pos[0] < self.p.MAP_SIZE and 0 <= desired_pos[1] < self.p.MAP_SIZE  and len(self.grid.agents[desired_pos].to_list()) != 0:
+                continue
+
+            
+
 
             if car.state == CarState.HAS_NOT_TOUCHED_INTERSECTION:
 
@@ -333,7 +347,11 @@ async def run_simulation(websocket, path):
 
     while len(model.grid.agents.to_list()) != 0:
         await websocket.send(model.step())
-        await asyncio.sleep(1)
+        await websocket.recv()
+
+
+
+        # await asyncio.sleep(1)
 
     # Send first model step and wait for response
 

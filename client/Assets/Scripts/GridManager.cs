@@ -29,15 +29,17 @@ public class GridManager : MonoBehaviour {
 
     void GenerateGrid() {
         _tiles = new Dictionary<Vector2, Tile>();
+
+        int laneMin = (_mapSize - _nLanes * 2) / 2;
+        int laneMax = laneMin + _nLanes * 2;
+        int laneMid = laneMin + _nLanes;
+
         for (int x = 0; x < _mapSize; x++) {
             for (int y = 0; y < _mapSize; y++) {
                 var spawnedTile = Instantiate(_tilePrefab, new Vector3(x * 10, 0, y * 10), Quaternion.identity);
                 spawnedTile.name = $"Tile {x} {y}";
 
 
-                int laneMin = (_mapSize - _nLanes * 2) / 2;
-                int laneMax = laneMin + _nLanes * 2;
-                int laneMid = laneMin + _nLanes;
 
                 if (laneMin <= x && x < laneMax && laneMin <= y && y < laneMax){
                     // self.tiles[i].append(TypesTiles.INTERSECTION)
@@ -45,9 +47,25 @@ public class GridManager : MonoBehaviour {
 
 
                 } else if (y == 0 && laneMin <= x && x < laneMid || y == _mapSize - 1 && laneMid <= x && x < laneMax || x == 0 && laneMid <= y&& y < laneMax || x == _mapSize - 1 && laneMin <= y && y< laneMid){
+                    spawnedTile.name = "End";
                     // spawn_points.append((i, j))
                     // self.tiles[i].append(TypesTiles.SPAWN)
-                    spawnedTile.GetComponent<Renderer>().material = _roadMaterial;
+                    // spawnedTile.GetComponent<Renderer>().material = _roadMaterial;
+                    spawnedTile.GetComponent<Renderer>().material.color = Color.blue;
+
+                    // Add collider to tile
+                    spawnedTile.gameObject.AddComponent<BoxCollider>();
+
+                    // detect if car is in tile
+                    
+
+                    
+
+                    
+
+
+
+
 
 
                 } else if (y == laneMin - 1 && laneMin <= x&& x < laneMid || y == laneMax && laneMid <= x && x < laneMax || x == laneMin - 1 && laneMid <= y && y < laneMax || x == laneMax && laneMin <= y&& y < laneMid){
@@ -62,9 +80,15 @@ public class GridManager : MonoBehaviour {
 
                 } else if (y == 0 && laneMid <= x && x < laneMax || x == 0 && laneMin <= y && y < laneMid || y == _mapSize - 1 && laneMin <= x && x < laneMid || x == _mapSize - 1 && laneMid <= y && y < laneMax) {
                     // self.tiles[i].append(TypesTiles.END_STREET)
-                    spawnedTile.GetComponent<Renderer>().material = _roadMaterial;
+                    // spawnedTile.GetComponent<Renderer>().material = _roadMaterial;
 
-                } else if (0 <= x && x < laneMin && laneMin <= y && y < laneMid || laneMax <= x && x < _mapSize && laneMid <= y && y < laneMax || 0 <= y && y < laneMin && laneMid <= x && x < laneMax || laneMax <= y && y < _mapSize && laneMin <= x && x < laneMid){
+                    // Change color to red
+                    spawnedTile.GetComponent<Renderer>().material.color = Color.red;
+                    
+                    
+                }
+
+               else if (0 <= x && x < laneMin && laneMin <= y && y < laneMid || laneMax <= x && x < _mapSize && laneMid <= y && y < laneMax || 0 <= y && y < laneMin && laneMid <= x && x < laneMax || laneMax <= y && y < _mapSize && laneMin <= x && x < laneMid){
                     // self.tiles[i].append(TypesTiles.REVERSED_STREET)
                     spawnedTile.GetComponent<Renderer>().material = _roadMaterial;
 
@@ -81,25 +105,29 @@ public class GridManager : MonoBehaviour {
 
                 }
 
-                // TODO: Add IF to check if tile is end point
-                _trafficLightPositions = new Vector2[4];
-                _trafficLightPositions[0] = new Vector2(laneMax, laneMin); // Top
-                _trafficLightPositions[1] = new Vector2(laneMax - 1, laneMax); // Right
-                _trafficLightPositions[2] = new Vector2(laneMin, laneMin - 1); // Left
-                _trafficLightPositions[3] = new Vector2(laneMin - 1, laneMax - 1); // Bottom 
+                //
 
-                // // TODO Make this dynamic
 
-                // if ((x < 6 && y < 6) || (x > 11 && y > 11) || (x > 11 && y < 6) || (x < 6 && y > 11)) {
-                //     // Change the color of the tile
-                //     spawnedTile.GetComponent<Renderer>().material.color = Color.red;
-                // }
+
+
+
+
+
+            
 
 
                 _tiles[new Vector2(x, y)] = spawnedTile;
             }
         }
+        // TODO: Add IF to check if tile is end point
+         _trafficLightPositions = new Vector2[4];
+         _trafficLightPositions[0] = new Vector2(laneMax, laneMin); // Top
+         _trafficLightPositions[1] = new Vector2(laneMax - 1, laneMax); // Right
+         _trafficLightPositions[2] = new Vector2(laneMin, laneMin - 1); // Left
+         _trafficLightPositions[3] = new Vector2(laneMin - 1, laneMax - 1); // Bottom 
 
+
+        
         // _cam.transform.position = new Vector3((float)_width/2 -0.5f, (float)_height / 2 - 0.5f,-10);
     }
 
@@ -137,6 +165,11 @@ public class GridManager : MonoBehaviour {
     IEnumerator MoveCar(GameObject obj, Tile tile, WebSocket websocket) {
         var startPos = obj.transform.position;
         var endPos = tile.transform.position;
+
+        // Rotate the car to the right direction
+        obj.transform.LookAt(endPos);
+
+
         var t = 0f;
         while (t < 1) {
             t += Time.deltaTime;

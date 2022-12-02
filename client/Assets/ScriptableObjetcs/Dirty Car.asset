@@ -10,13 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d97a2c8871bdd4408afeb33576155568, type: 3}
-  m_Name: Deportive
+  m_Name: Dirty Car
   m_EditorClassIdentifier: 
-  scale: 0.3
-  model: {fileID: 919132149155446097, guid: 29643a25c794dda4090c1069b92a23d8, type: 3}
+  scale: 1
+  model: {fileID: 919132149155446097, guid: ab95e80c08c99454b9f8bee673dca0f6, type: 3}
   width: 1
   height: 1
   depth: 1
-  rotX: 0
+  rotX: -90
   rotY: 0
   rotZ: 0
+  transX: 0
+  transY: 0
+  transZ: 0

@@ -10,5 +10,17 @@ public class VehicleSO : ScriptableObject
     public float width;
     public float height;
     public float depth;
+    public float rotX;
+    public float rotY;
+    public float rotZ;
+    public float transX;
+    public float transY;
+    public float transZ;
+
+    
+
+
+
+
 }
 

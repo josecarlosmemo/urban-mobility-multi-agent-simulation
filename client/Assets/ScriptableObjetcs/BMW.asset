@@ -12,8 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d97a2c8871bdd4408afeb33576155568, type: 3}
   m_Name: BMW
   m_EditorClassIdentifier: 
-  scale: 0.07
+  scale: 0.05
   model: {fileID: 919132149155446097, guid: 6587628951224cb4092f921a361ebe0a, type: 3}
   width: 1
   height: 1
   depth: 1
+  rotX: 0
+  rotY: 90
+  rotZ: 0
+  transX: 0
+  transY: -3.7
+  transZ: 0
