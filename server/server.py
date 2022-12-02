@@ -26,6 +26,7 @@ class CarState(IntEnum):
     HAS_TOUCHED_INTERSECTION = 0
     HAS_NOT_TOUCHED_INTERSECTION = 1
     STOP_LIGHT = 2
+    TO_STREET = 3
 
 # MAP_SIZE int
 # MAP_Lanes
@@ -185,16 +186,6 @@ class MapModel(ap.Model):
 
             payload += '{"id": ' + str(car.id) + ', "x": ' + str(self.grid.positions[car][1]) + ', "y": ' + str(self.grid.positions[car][0]) + '},'
 
-            # Check if car is at desired position
-
-             # Check if cell in front has a car
-            desired_pos = (self.grid.positions[car][0] + dirs[car.from_dir][0], self.grid.positions[car][1] + dirs[car.from_dir][1])
-
-            if 0 <= desired_pos[0] < self.p.MAP_SIZE and 0 <= desired_pos[1] < self.p.MAP_SIZE  and len(self.grid.agents[desired_pos].to_list()) != 0:
-                continue
-
-            
-
 
             if car.state == CarState.HAS_NOT_TOUCHED_INTERSECTION:
 
@@ -220,6 +211,9 @@ class MapModel(ap.Model):
                     if self.tiles[desired_pos[0]][desired_pos[1]] == TypesTiles.STREET:
                         self.grid.move_to(car, desired_pos)
                     else:
+                        if len(self.grid.agents[(self.grid.positions[car][0] + dirs[car.from_dir][0], self.grid.positions[car][1] + dirs[car.from_dir][1])].to_list()) != 0:
+                            continue
+
                         self.grid.move_by(car, dirs[car.from_dir])
                     continue
 
@@ -255,7 +249,7 @@ class MapModel(ap.Model):
                 self.grid.move_by(car, dirs[car.from_dir])
                 car.state = CarState.HAS_TOUCHED_INTERSECTION
 
-            else:
+            elif car.state == CarState.HAS_TOUCHED_INTERSECTION:
                 x = dirs[car.from_dir][0] + dirs[car.to_dir][0]
                 y = dirs[car.from_dir][1] + dirs[car.to_dir][1]
                 
@@ -267,20 +261,29 @@ class MapModel(ap.Model):
                 desired_dir = (x, y)
                 desired_pos = (self.grid.positions[car][0] + desired_dir[0], self.grid.positions[car][1] + desired_dir[1])
 
+                if not self.tiles[desired_pos[0]][desired_pos[1]] == TypesTiles.INTERSECTION:
+                    # Check if there is a car in the desired position
+                    car.state = CarState.TO_STREET
+                    continue
+
+                if len(self.grid.agents[desired_pos].to_list()) != 0:
+                    continue
+                self.grid.move_by(car, desired_dir)
+
+            else:
+                desired_pos = (self.grid.positions[car][0] + dirs[car.to_dir][0], self.grid.positions[car][1] + dirs[car.to_dir][1])
                 # Check if new position is in the grid
                 if not (0 <= desired_pos[0] < self.p.MAP_SIZE and 0 <= desired_pos[1] < self.p.MAP_SIZE):
                     # Remove car from grid
+                    print("Pos: ", desired_pos)
                     self.grid.remove_agents(car)
                     continue
 
-                # Check if there is a car in the desired position
                 if len(self.grid.agents[desired_pos].to_list()) != 0:
+                    print("Car in front")
                     continue
+                self.grid.move_by(car, dirs[car.to_dir])
 
-                if self.tiles[desired_pos[0]][desired_pos[1]] == TypesTiles.INTERSECTION:
-                    self.grid.move_by(car, desired_dir)
-                else:
-                    self.grid.move_by(car, dirs[car.to_dir])
 
         # Send Location
 

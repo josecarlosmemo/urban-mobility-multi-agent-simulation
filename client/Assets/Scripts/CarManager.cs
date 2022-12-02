@@ -23,12 +23,9 @@ public class CarManager : MonoBehaviour
     private Dictionary<int, GameObject> _cars;
 
 
-
     [SerializeField] private string _serverUrl = "ws://localhost:8765";
 
     public WebSocket websocket;
-
-
 
 
     // Start is called before the first frame update
@@ -70,7 +67,12 @@ public class CarManager : MonoBehaviour
                 foreach (var car in list_cars.cars)
                 {
                     var carObject = _cars[car.id];
-                    _grid.MoveObjectToTile(carObject, new Vector2(car.x, car.y), websocket);
+                    if (_grid.isTileEnd(new Vector2(car.x, car.y))){
+                    //     Destroy(carObject);
+                        _cars.Remove(car.id);
+                    } else {
+                        _grid.MoveObjectToTile(carObject, new Vector2(car.x, car.y), websocket);
+                    }
                 }
             }
 
@@ -78,15 +80,12 @@ public class CarManager : MonoBehaviour
 
         };
 
-        InvokeRepeating("SendWebSocketMessage", 0.0f, 1.0f); //TODO Change this
-
-
-
+        InvokeRepeating("SendWebSocketMessage", 0.0f, 2.0f); //TODO Change this
 
 
         await websocket.Connect();
 
-        
+
     }
 
     // Update is called once per frame

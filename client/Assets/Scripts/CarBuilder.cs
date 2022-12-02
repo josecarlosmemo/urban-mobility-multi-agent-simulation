@@ -13,11 +13,15 @@ public class CarBuilder : MonoBehaviour
 
     private GameObject _childVehicle;
 
+    [SerializeField]
+    private CameraManager _cameraManager;
+    private Camera _camera;
+
     void Awake()
     {
         _data = _vehicleSOs[Random.Range(0, _vehicleSOs.Length)];
         UpdateVehicle();
-        
+        _camera = gameObject.transform.Find("Camera").GetComponent<Camera>();
     }
     
 
@@ -30,12 +34,6 @@ public class CarBuilder : MonoBehaviour
             Destroy(_childVehicle);
         }
 
-      
-
-
-
-
-
         // utilizando los datos construir carrito
         _childVehicle = Instantiate<GameObject>(
             _data.model, 
@@ -47,15 +45,8 @@ public class CarBuilder : MonoBehaviour
 
         // If the vehicle has a translation, apply it
         if (_data.transX != 0 || _data.transY != 0 || _data.transZ != 0) {
-             _childVehicle.transform.Translate(_data.transX, _data.transY, _data.transZ);
+            _childVehicle.transform.Translate(_data.transX, _data.transY, _data.transZ);
         }
-
-        
-       
-
-
-
-
 
         _childVehicle.transform.localScale = new Vector3(
             _data.scale, 
@@ -64,7 +55,7 @@ public class CarBuilder : MonoBehaviour
         );
 
         BoxCollider bc = gameObject.AddComponent<BoxCollider>();
-        bc.size = new Vector3(_data.width * _data.scale, _data.height * _data.scale, _data.depth * _data.scale);
+        bc.size = new Vector3(_data.width * _data.scale + 2, _data.height * _data.scale + 2, _data.depth * _data.scale + 2);
         bc.center = new Vector3(0, _data.height * _data.scale / 2, 0);
 
         // add collider detection
@@ -79,6 +70,23 @@ public class CarBuilder : MonoBehaviour
 
         _data = newVehicle;
         UpdateVehicle();
+    }
+
+    void OnTriggerEnter(Collider other) {
+        if (_camera.gameObject.activeSelf) {
+            // Deactivate camera
+            _camera.gameObject.SetActive(false);
+            _cameraManager.ChangeCamera();
+        }
+        Destroy(gameObject);
+    }
+
+    void OnMouseDown() {
+        // Find active camera manager
+        if (_cameraManager == null) {
+            _cameraManager = FindObjectOfType<CameraManager>();
+        }
+        _cameraManager.CarView(_camera);
     }
 
 }
