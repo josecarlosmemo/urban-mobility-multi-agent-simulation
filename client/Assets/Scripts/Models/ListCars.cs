@@ -5,8 +5,8 @@ using System;
 public enum TrafficLight
 {
     Red = 0,
-    Green,
-    Yellow
+    Green=1,
+    Yellow=2
 }
 
 

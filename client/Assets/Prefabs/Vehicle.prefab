@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3261870144345652013}
   m_Layer: 3
   m_Name: Vehicle
-  m_TagString: Untagged
+  m_TagString: Car
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -47,6 +47,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _vehicleSOs:
   - {fileID: 11400000, guid: a3c0277fcbe7a44ee82dbd6b44a6aad3, type: 2}
+  - {fileID: 11400000, guid: c27e2311bf03e4ccebbbb8ed53e2e2f6, type: 2}
+  - {fileID: 11400000, guid: 46d1b997a7ccd4dd58934643589a74f2, type: 2}
+  - {fileID: 11400000, guid: a3347dba009f84083a0dca7e32432696, type: 2}
   _cameraManager: {fileID: 0}
 --- !u!1 &4984387876070049239
 GameObject:

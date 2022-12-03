@@ -47,7 +47,7 @@ public class WebSocketClient : MonoBehaviour
             // Move cars
             foreach (var c in car.cars)
             {
-                _grid.MoveObjectToTile(_carPrefab, new Vector2(c.x, c.y), websocket);
+                // _grid.MoveObjectToTile(_carPrefab, new Vector2(c.x, c.y), websocket);
             }
 
 

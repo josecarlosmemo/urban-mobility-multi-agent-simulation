@@ -149,6 +149,7 @@ class MapModel(ap.Model):
         self.turning = False
 
     def step(self):
+        print(self.t)
         
         active_agents = self.grid.agents.to_list()
 

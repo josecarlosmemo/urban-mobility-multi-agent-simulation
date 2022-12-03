@@ -7,6 +7,7 @@ using NativeWebSocket;
 public class GridManager : MonoBehaviour {
     [SerializeField] private int _mapSize = 18;
     [SerializeField] private int _nLanes = 3;
+    [SerializeField] private float speed = 5f;
 
     [SerializeField] private Material _grassMaterial;
     [SerializeField] private Material _roadMaterial;
@@ -16,14 +17,17 @@ public class GridManager : MonoBehaviour {
 
     [SerializeField] private Transform _cam;
 
+    [SerializeField] private GameObject _trafficLightPrefab;
+
     private Dictionary<Vector2, Tile> _tiles;
 
-    private int _activeCarsCount = 0;
     private int _movedCarsCount = 0;
     // Private coordinate array
     private Vector2[] _trafficLightPositions;
 
     private List<Vector2> _endPositions;
+
+    public List<GameObject> _trafficLights;
 
     void Start() {
         GenerateGrid();
@@ -96,6 +100,25 @@ public class GridManager : MonoBehaviour {
         _trafficLightPositions[2] = new Vector2(laneMin - 1, laneMin - 1); // Left
         _trafficLightPositions[3] = new Vector2(laneMin - 1, laneMax); // Top 
 
+        var t4 =Instantiate(_trafficLightPrefab, new Vector3(_trafficLightPositions[0].x * 10 - 5, 0, _trafficLightPositions[0].y * 10 + 5), Quaternion.Euler(0,-35,0));
+        t4.name = "4";
+        var t2 =Instantiate(_trafficLightPrefab, new Vector3(_trafficLightPositions[1].x * 10 - 5, 0, _trafficLightPositions[1].y * 10 - 5), Quaternion.Euler(0, -125, 0));
+        t2.name = "2";
+        var t3 =Instantiate(_trafficLightPrefab, new Vector3(_trafficLightPositions[2].x * 10 + 5, 0, _trafficLightPositions[2].y * 10 + 5), Quaternion.Euler(0, 55, 0));
+        t3.name = "3";
+        var t1 =Instantiate(_trafficLightPrefab, new Vector3(_trafficLightPositions[3].x * 10 + 5, 0, _trafficLightPositions[3].y * 10 - 5), Quaternion.Euler(0, 145, 0));
+        t1.name = "1";
+
+        _trafficLights.Add(t1);
+        _trafficLights.Add(t2);
+        _trafficLights.Add(t3);
+        _trafficLights.Add(t4);
+
+
+
+
+       
+
         
         // _cam.transform.position = new Vector3((float)_width/2 -0.5f, (float)_height / 2 - 0.5f,-10);
     }
@@ -106,10 +129,10 @@ public class GridManager : MonoBehaviour {
     }
 
     // Move Object to a tile
-    public void MoveObjectToTile(GameObject obj, Vector2 pos, WebSocket websocket) {
+    public void MoveObjectToTile(GameObject obj, Vector2 pos, WebSocket websocket, int activeCars) {
         if (_tiles.TryGetValue(pos, out var tile)) {
             // Move object slowly to the tile
-            StartCoroutine(MoveCar(obj, tile, websocket));
+            StartCoroutine(MoveCar(obj, tile, websocket, activeCars));
             
         }
     }
@@ -131,7 +154,7 @@ public class GridManager : MonoBehaviour {
     }
 
     // MoveObjectToTileCoroutine
-    IEnumerator MoveCar(GameObject obj, Tile tile, WebSocket websocket) {
+    IEnumerator MoveCar(GameObject obj, Tile tile, WebSocket websocket, int activeCars) {
         var startPos = obj.transform.position;
         var endPos = tile.transform.position;
 
@@ -141,16 +164,41 @@ public class GridManager : MonoBehaviour {
 
         var t = 0f;
         while (t < 1 && obj != null) {
-            t += Time.deltaTime;
+            t += Time.deltaTime * speed;
             obj.transform.position = Vector3.Lerp(startPos, endPos, t);
             yield return null;
         }
         _movedCarsCount++;
-        if (_movedCarsCount == _activeCarsCount) {
+
+
+
+        if (_movedCarsCount == activeCars) {
             _movedCarsCount = 0;
-            _activeCarsCount = 0;
+            // _activeCarsCount = 0;
             websocket.SendText("Cars moved");
         }
+    }
+
+    public void setLightState(int id, TrafficLight state){
+
+        // Loop through traffic light children with id
+        var current_traffic_light = _trafficLights[id];
+        var color = (int) state;
+
+        // Loop through children
+        foreach (Transform child in current_traffic_light.transform) {
+
+            if (child.name == color.ToString()) {
+                child.gameObject.SetActive(true);
+                
+            } else {
+                child.gameObject.SetActive(false);
+            }
+        }
+
+
+
+
     }
 
 }

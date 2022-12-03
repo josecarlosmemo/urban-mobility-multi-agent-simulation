@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Threading.Tasks;
 
 using NativeWebSocket;
 
@@ -33,9 +34,12 @@ public class CarManager : MonoBehaviour
     {
         websocket = new WebSocket(_serverUrl);
 
-        websocket.OnOpen += () =>
+        websocket.OnOpen += async () =>
         {
             Debug.Log("Connection open!");
+            await Task.Run(() => SendWebSocketMessage());
+            await websocket.SendText("Hello World");
+
         };
 
 
@@ -63,7 +67,12 @@ public class CarManager : MonoBehaviour
                 }
 
 
+
+
+
+
             } else {
+                Debug.Log(list_cars.t);
                 foreach (var car in list_cars.cars)
                 {
                     var carObject = _cars[car.id];
@@ -71,19 +80,35 @@ public class CarManager : MonoBehaviour
                     //     Destroy(carObject);
                         _cars.Remove(car.id);
                     } else {
-                        _grid.MoveObjectToTile(carObject, new Vector2(car.x, car.y), websocket);
+                        _grid.MoveObjectToTile(carObject, new Vector2(car.x, car.y), websocket, list_cars.cars.Length);
                     }
                 }
+
+                for (int i = 0; i < 4; i++)
+                {
+                    _grid.setLightState(i, list_cars.traffic_lights[i]);
+
+                    
+
+                   
+
+                    
+                }
+              
+
+
             }
 
         }
 
         };
 
-        InvokeRepeating("SendWebSocketMessage", 0.0f, 2.0f); //TODO Change this
+        // InvokeRepeating("SendWebSocketMessage", 0.0f, 2.0f); //TODO Change this
 
 
         await websocket.Connect();
+
+
 
 
     }
@@ -104,6 +129,7 @@ public class CarManager : MonoBehaviour
             await websocket.SendText(_numLanes.ToString());
             await websocket.SendText(_numCars.ToString());
         }
+        // return true;
     }
 
 

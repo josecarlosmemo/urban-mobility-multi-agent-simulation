@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.1188571, g: 0.18339978, b: 0.3297099, a: 1}
+  m_IndirectSpecularColor: {r: 0.11880899, g: 0.18341434, b: 0.32990912, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -15821,7 +15821,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &495532325
 Transform:
   m_ObjectHideFlags: 0
@@ -16806,7 +16806,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &522312120
 Transform:
   m_ObjectHideFlags: 0
@@ -27864,7 +27864,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &879982130
 Transform:
   m_ObjectHideFlags: 0
@@ -33150,7 +33150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _carPrefab: {fileID: 1178179335028357100, guid: 9efb5a53b25eb4032ba9f3eccebb0bcd, type: 3}
   _mapSize: 18
-  _numCars: 100
+  _numCars: 500
   _numLanes: 3
   _grid: {fileID: 1355228231}
   _serverUrl: ws://localhost:8765
@@ -44005,10 +44005,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _mapSize: 18
   _nLanes: 3
+  speed: 5
   _grassMaterial: {fileID: -1709943224212391761, guid: 5e4ba99a7c18d2a4784054853823166d, type: 3}
   _roadMaterial: {fileID: 2092959942078389683, guid: 5e4ba99a7c18d2a4784054853823166d, type: 3}
   _tilePrefab: {fileID: 1030493385418134809, guid: 0b292464f63754b4f912565d5df25c3b, type: 3}
   _cam: {fileID: 963194228}
+  _trafficLightPrefab: {fileID: 3760153926850852648, guid: e778db15e878f41329265495c0a1665f, type: 3}
+  _trafficLights: []
 --- !u!4 &1355228232
 Transform:
   m_ObjectHideFlags: 0
@@ -46324,7 +46327,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1462675815
 Transform:
   m_ObjectHideFlags: 0

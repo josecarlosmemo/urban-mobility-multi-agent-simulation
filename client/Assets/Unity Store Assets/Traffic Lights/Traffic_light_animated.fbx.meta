@@ -1,59 +1,32 @@
 fileFormatVersion: 2
-guid: c384b15395a314f8e91bddb42a1efada
+guid: 018d7a860d2994a569b0a75dff1e1ee5
 ModelImporter:
   serializedVersion: 21300
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      74: 1827226128182048838
+    second: Take 001
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Material.009
-    second: {fileID: 2100000, guid: 656c14776e9f24be796107b4ce708a60, type: 2}
+      name: traffic_light_shader_green
+    second: {fileID: 2100000, guid: a11a890dd3e224f4bba0a7e5139ae948, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: duralight 12inch amber OFF
-    second: {fileID: 2100000, guid: 03235fe44df6049a5aac610b6736241f, type: 2}
+      name: traffic_light_shader_orange
+    second: {fileID: 2100000, guid: fac409202035f446185d77f5cb98925e, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: duralight 12inch amber ON
-    second: {fileID: 2100000, guid: c9772018adb3c4d359beaed74f2c2f64, type: 2}
+      name: traffic_light_shader_red
+    second: {fileID: 2100000, guid: ba3ba2b0b385b422da53aba398090868, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: duralight 12inch green OFF
-    second: {fileID: 2100000, guid: 394f9b9b3b6b24e3cbfde38d9ec2e7d8, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: duralight 12inch green ON
-    second: {fileID: 2100000, guid: 8a04b4ed7d93d43968a74177411afb2d, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: duralight 12inch red OFF
-    second: {fileID: 2100000, guid: 57db736ec56c64bcd87479abd6c07b04, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: duralight 12inch red ON
-    second: {fileID: 2100000, guid: 9fe0fe9e497364d9ba8ca51cffc5826c, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: inner visor
-    second: {fileID: 2100000, guid: 0103ad739f8a24699a0f0aec3bc98b28, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: polycarbonate
-    second: {fileID: 2100000, guid: 5cb716a9e7f6148cbb70a665e1f51e58, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: rubber rim
-    second: {fileID: 2100000, guid: ff018d338badc40fabd190b1b2084055, type: 2}
+      name: traffic_light_shader_red_red
+    second: {fileID: 2100000, guid: 90c606f51e19542b3808868909ecca7a, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -126,7 +99,7 @@ ModelImporter:
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []
-  importAnimation: 1
+  importAnimation: 0
   humanDescription:
     serializedVersion: 3
     human: []
