@@ -44,7 +44,9 @@
 
 ## Project Demo
 
-[![Urban Mobility in México Screen Shot][project_screenshot]](https://youtu.be/WCIW4GSYRKo)
+[![demo](./images/demo.gif)](https://youtu.be/WCIW4GSYRKo)
+
+
 
 For a complete demo of the project, please visit the following link or click on the image above:
 
